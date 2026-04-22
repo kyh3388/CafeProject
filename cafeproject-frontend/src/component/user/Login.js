@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./User.css";
 
 // 로그인 컴포넌트
@@ -80,7 +80,7 @@ function Login({ setUser }) {
           <input
             type="text"
             value={userId}
-            onChange={(e) => setUserId(e.target.value)} // 아이디 상태 업데이트
+            onChange={(e) => setUserId(e.target.value)}
             required
           />
           <br />
@@ -89,16 +89,28 @@ function Login({ setUser }) {
           <input
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)} // 비밀번호 상태 업데이트
+            onChange={(e) => setPassword(e.target.value)}
             required
           />
           <br />
 
           <button type="submit" disabled={loading}>
             {loading ? "로그인 중..." : "로그인"}{" "}
-            {/* 로딩 중 여부에 따라 버튼 텍스트 변경 */}
           </button>
         </form>
+
+        <div style={{ marginTop: "12px", textAlign: "center" }}>
+          <Link
+            to="/find-id"
+            style={{
+              fontSize: "13px",
+              color: "#666",
+              textDecoration: "underline",
+            }}
+          >
+            아이디 찾기
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -41,13 +41,7 @@ function BoardLayout({ user, setUser, postCount, error }) {
             <div className="login-section">
               <ul className="login-menu">
                 <Link to="/login">로그인</Link>
-                <br />
                 <Link to="/register">회원가입</Link>
-                <br />
-                <Link to="/find-id">아이디 찾기</Link>
-                <br />
-                <Link to="/find-password">비밀번호 찾기</Link>
-                <br />
               </ul>
             </div>
           ) : (
@@ -83,11 +77,11 @@ function BoardLayout({ user, setUser, postCount, error }) {
             <li>카테고리</li>
             <hr width="100%" color="black" />
             <Link to="/boards/category/all">전체게시판</Link>
-            <br />
+
             <Link to="/boards/category/notice">공지게시판</Link>
-            <br />
+
             <Link to="/boards/category/free">자유게시판</Link>
-            <br />
+
             <Link to="/boards/category/questions">질문게시판</Link>
           </ul>
         </div>

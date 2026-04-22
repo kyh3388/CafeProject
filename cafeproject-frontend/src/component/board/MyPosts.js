@@ -89,7 +89,6 @@ function MyPosts({ user }) {
           <table className="board-table">
             <thead>
               <tr>
-                <th>번호</th>
                 <th>카테고리</th>
                 <th>제목</th>
                 <th>내용</th>
@@ -101,7 +100,6 @@ function MyPosts({ user }) {
               {/* 공지 게시물 먼저 표시 */}
               {noticePosts.map((post) => (
                 <tr key={post.boardNumber} className="notice-row">
-                  <td>{post.boardNumber}</td>
                   <td>{getCategoryNameInKorean(post.boardCategory)}</td>
                   <td>
                     <Link to={`/boards/detail/${post.boardNumber}`}>
@@ -122,7 +120,6 @@ function MyPosts({ user }) {
               {/* 나머지 게시물 표시 */}
               {otherPosts.map((post) => (
                 <tr key={post.boardNumber}>
-                  <td>{post.boardNumber}</td>
                   <td>{getCategoryNameInKorean(post.boardCategory)}</td>
                   <td>
                     <Link to={`/boards/detail/${post.boardNumber}`}>

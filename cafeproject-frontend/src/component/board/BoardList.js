@@ -38,12 +38,9 @@ function BoardList({ user }) {
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
     const day = date.getDate();
-    const hour = String(date.getHours()).padStart(2, "0");
-    const minute = String(date.getMinutes()).padStart(2, "0");
 
     return {
-      date: `${year}. ${month}. ${day}.`,
-      time: `${hour} : ${minute}`,
+      date: `${year}. ${month}. ${day}`,
     };
   };
 
@@ -161,7 +158,6 @@ function BoardList({ user }) {
           <table className="board-table">
             <thead>
               <tr className="list-up">
-                <th className="col-number">번호</th>
                 <th className="col-category">카테고리</th>
                 <th className="col-title">제목</th>
                 <th className="col-content">내용</th>
@@ -178,7 +174,6 @@ function BoardList({ user }) {
                     key={board.boardNumber}
                     className={board.boardCategory === 4 ? "notice-row" : ""}
                   >
-                    <td>{board.boardNumber}</td>
                     <td>
                       <span
                         className={`category-badge category-${board.boardCategory}`}
@@ -210,7 +205,6 @@ function BoardList({ user }) {
               {Array.from({ length: emptyRows }).map((_, index) => (
                 <tr key={`empty-${index}`} className="empty-row">
                   <td>&nbsp;</td>
-                  <td></td>
                   <td></td>
                   <td></td>
                   <td></td>

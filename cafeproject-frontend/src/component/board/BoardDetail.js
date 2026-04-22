@@ -10,7 +10,16 @@ function BoardDetail({ user }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedContent, setEditedContent] = useState("");
+
+  const [comments, setComments] = useState([]);
+  const [commentPage, setCommentPage] = useState(0);
+  const [commentTotalPages, setCommentTotalPages] = useState(1);
+  const [rootCommentContent, setRootCommentContent] = useState("");
+  const [replyParentId, setReplyParentId] = useState(null);
+  const [replyContent, setReplyContent] = useState("");
+
   const navigate = useNavigate();
+  const commentPageSize = 10;
 
   const formatDateTime = (dateString) => {
     const date = new Date(dateString);
@@ -27,28 +36,54 @@ function BoardDetail({ user }) {
     };
   };
 
-  useEffect(() => {
-    const fetchBoard = async () => {
-      try {
-        const response = await fetch(
-          `http://localhost:8080/boards/detail/${boardNumber}`,
-        );
+  const fetchBoard = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/boards/detail/${boardNumber}`,
+      );
 
-        if (!response.ok) {
-          setError("게시물을 불러오는 중 오류가 발생했습니다.");
-        } else {
-          const data = await response.json();
-          setBoard(data);
-          setEditedTitle(data.boardTitle);
-          setEditedContent(data.boardWrite);
-        }
-      } catch (err) {
-        setError("네트워크 오류가 발생했습니다.");
+      if (!response.ok) {
+        setError("게시물을 불러오는 중 오류가 발생했습니다.");
+      } else {
+        const data = await response.json();
+        setBoard(data);
+        setEditedTitle(data.boardTitle);
+        setEditedContent(data.boardWrite);
       }
-    };
+    } catch (err) {
+      setError("네트워크 오류가 발생했습니다.");
+    }
+  };
 
+  const fetchComments = async (page = commentPage) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/boards/${boardNumber}/comments?page=${page}&size=${commentPageSize}`,
+        {
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("댓글을 불러오지 못했습니다.");
+      }
+
+      const data = await response.json();
+      setComments(data.comments || []);
+      setCommentPage(data.currentPage ?? 0);
+      setCommentTotalPages(Math.max(1, data.totalPages ?? 1));
+    } catch (err) {
+      console.error("댓글 조회 오류:", err);
+    }
+  };
+
+  useEffect(() => {
     fetchBoard();
   }, [boardNumber]);
+
+  useEffect(() => {
+    fetchComments(commentPage);
+  }, [boardNumber, commentPage]);
 
   const handleDelete = async () => {
     if (window.confirm("정말로 이 게시물을 삭제하시겠습니까?")) {
@@ -66,7 +101,7 @@ function BoardDetail({ user }) {
         } else {
           alert("게시물 삭제에 실패했습니다.");
         }
-      } catch (error) {
+      } catch (deleteError) {
         alert("네트워크 오류로 게시물 삭제에 실패했습니다.");
       }
     }
@@ -97,12 +132,218 @@ function BoardDetail({ user }) {
         } else {
           alert("게시물 수정에 실패했습니다.");
         }
-      } catch (error) {
+      } catch (editError) {
         alert("네트워크 오류로 게시물 수정에 실패했습니다.");
       }
     } else {
       setIsEditing(true);
     }
+  };
+
+  const handleCreateRootComment = async () => {
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      navigate("/login");
+      return;
+    }
+
+    if (!rootCommentContent.trim()) {
+      alert("댓글 내용을 입력해주세요.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/boards/${boardNumber}/comments`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            commentContent: rootCommentContent,
+            parentCommentId: null,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const message = await response.text();
+        alert(message || "댓글 작성에 실패했습니다.");
+        return;
+      }
+
+      setRootCommentContent("");
+      setCommentPage(0);
+      await fetchComments(0);
+    } catch (commentError) {
+      alert("네트워크 오류로 댓글 작성에 실패했습니다.");
+    }
+  };
+
+  const handleCreateReply = async () => {
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      navigate("/login");
+      return;
+    }
+
+    if (!replyParentId) {
+      return;
+    }
+
+    if (!replyContent.trim()) {
+      alert("답글 내용을 입력해주세요.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/boards/${boardNumber}/comments`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            commentContent: replyContent,
+            parentCommentId: replyParentId,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const message = await response.text();
+        alert(message || "답글 작성에 실패했습니다.");
+        return;
+      }
+
+      setReplyParentId(null);
+      setReplyContent("");
+      await fetchComments(commentPage);
+    } catch (replyError) {
+      alert("네트워크 오류로 답글 작성에 실패했습니다.");
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!window.confirm("이 댓글을 삭제하시겠습니까?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/comments/${commentId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        const message = await response.text();
+        alert(message || "댓글 삭제에 실패했습니다.");
+        return;
+      }
+
+      await fetchComments(commentPage);
+    } catch (deleteError) {
+      alert("네트워크 오류로 댓글 삭제에 실패했습니다.");
+    }
+  };
+
+  const canDeleteComment = (comment) => {
+    if (!user) return false;
+    return comment.userId === user.userId || user.userLevel >= 4;
+  };
+
+  const renderReplyEditor = (parentId) => {
+    if (replyParentId !== parentId) return null;
+
+    return (
+      <div className="comment-reply-editor">
+        <textarea
+          value={replyContent}
+          onChange={(e) => setReplyContent(e.target.value)}
+          placeholder="답글을 입력하세요"
+        />
+        <div className="comment-editor-buttons">
+          <button type="button" onClick={handleCreateReply}>
+            등록
+          </button>
+          <button
+            type="button"
+            className="comment-cancel-button"
+            onClick={() => {
+              setReplyParentId(null);
+              setReplyContent("");
+            }}
+          >
+            취소
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderCommentItem = (comment, depth = 0) => {
+    const created = formatDateTime(comment.createdDate);
+    const isDeleted = comment.deletedYn === "Y";
+    const canReply = user && depth < 2 && !isDeleted;
+
+    return (
+      <div
+        key={comment.commentId}
+        className={`comment-item depth-${depth} ${isDeleted ? "deleted-comment" : ""}`}
+      >
+        <div className="comment-header">
+          <div className="comment-author-block">
+            <span className="comment-author">{comment.userNickname}</span>
+            <span className="comment-date">
+              {created.date} {created.time}
+            </span>
+          </div>
+
+          <div className="comment-actions">
+            {canReply && (
+              <button
+                type="button"
+                onClick={() => {
+                  setReplyParentId(comment.commentId);
+                  setReplyContent("");
+                }}
+              >
+                답글
+              </button>
+            )}
+
+            {!isDeleted && canDeleteComment(comment) && (
+              <button
+                type="button"
+                className="comment-delete-button"
+                onClick={() => handleDeleteComment(comment.commentId)}
+              >
+                삭제
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="comment-body">{comment.commentContent}</div>
+
+        {renderReplyEditor(comment.commentId)}
+
+        {comment.children && comment.children.length > 0 && (
+          <div className="comment-children">
+            {comment.children.map((child) =>
+              renderCommentItem(child, depth + 1),
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (error) {
@@ -113,8 +354,8 @@ function BoardDetail({ user }) {
     return <div className="board-page">로딩 중...</div>;
   }
 
-  const userNickname = board.user ? board.user.userNickname : "알 수 없음";
-  const userId = board.user ? board.user.userId : null;
+  const boardUserNickname = board.user ? board.user.userNickname : "알 수 없음";
+  const boardUserId = board.user ? board.user.userId : null;
   const created = formatDateTime(board.createdDate);
 
   const isNeverUpdated =
@@ -143,7 +384,7 @@ function BoardDetail({ user }) {
         <div className="board-detail-meta">
           <div className="board-detail-meta-item">
             <span className="meta-label">작성자</span>
-            <span className="meta-value">{userNickname}</span>
+            <span className="meta-value">{boardUserNickname}</span>
           </div>
           <div className="board-detail-meta-item">
             <span className="meta-label">작성일</span>
@@ -190,7 +431,7 @@ function BoardDetail({ user }) {
             뒤로가기
           </button>
 
-          {user && (userId === user.userId || user.userLevel >= 4) && (
+          {user && (boardUserId === user.userId || user.userLevel >= 4) && (
             <div className="detail-button-group">
               <button type="button" onClick={handleEdit}>
                 {isEditing ? "저장" : "수정"}
@@ -200,6 +441,63 @@ function BoardDetail({ user }) {
               </button>
             </div>
           )}
+        </div>
+
+        <div className="comment-section">
+          <div className="comment-section-header">
+            <h3>댓글</h3>
+            <p>대대댓글까지만 작성할 수 있습니다.</p>
+          </div>
+
+          <div className="comment-editor">
+            <textarea
+              value={rootCommentContent}
+              onChange={(e) => setRootCommentContent(e.target.value)}
+              placeholder={
+                user
+                  ? "댓글을 입력하세요"
+                  : "로그인 후 댓글을 작성할 수 있습니다"
+              }
+              disabled={!user}
+            />
+            <div className="comment-editor-buttons">
+              <button
+                type="button"
+                onClick={handleCreateRootComment}
+                disabled={!user}
+              >
+                댓글 등록
+              </button>
+            </div>
+          </div>
+
+          <div className="comment-list">
+            {comments.length > 0 ? (
+              comments.map((comment) => renderCommentItem(comment, 0))
+            ) : (
+              <div className="comment-empty">첫 댓글을 남겨보세요.</div>
+            )}
+          </div>
+
+          <div className="comment-pagination">
+            <button
+              type="button"
+              onClick={() => setCommentPage((prev) => prev - 1)}
+              disabled={commentPage === 0}
+            >
+              이전 댓글
+            </button>
+            <span>
+              {commentPage + 1} / {commentTotalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCommentPage((prev) => prev + 1)}
+              disabled={commentPage >= commentTotalPages - 1}
+            >
+              다음 댓글
+            </button>
+          </div>
         </div>
       </div>
     </div>

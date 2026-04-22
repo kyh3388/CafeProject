@@ -2,19 +2,26 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Board.css";
 
-// 게시물 작성 컴포넌트
-function CreatePost() {
-  // 제목, 내용, 카테고리를 저장할 상태 변수
+function CreatePost({ user }) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [category, setCategory] = useState(2); // 기본값으로 '자유게시판' 설정
-  const navigate = useNavigate(); // 페이지 이동을 위한 훅
+  const [category, setCategory] = useState(2);
+  const navigate = useNavigate();
 
-  // 폼 제출 처리 함수
   const handleSubmit = async (e) => {
-    e.preventDefault(); // 폼 기본 제출 동작 방지
+    e.preventDefault();
 
-    // 새 게시물 데이터 생성
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      navigate("/login");
+      return;
+    }
+
+    if (category === 4 && user.userLevel < 4) {
+      alert("공지글은 관리자(LV4)만 작성할 수 있습니다.");
+      return;
+    }
+
     const newPost = {
       boardTitle: title,
       boardWrite: content,
@@ -22,69 +29,100 @@ function CreatePost() {
     };
 
     try {
-      // 게시물 작성 API 호출
       const response = await fetch("http://localhost:8080/boards/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // 쿠키 포함
-        body: JSON.stringify(newPost), // JSON 형식으로 데이터 전송
+        credentials: "include",
+        body: JSON.stringify(newPost),
       });
 
-      // 로그인한 사용자만 게시물 작성 가능
       if (!response.ok) {
-        console.error(`Error: ${response.status}`); // 오류 상태 콘솔에 출력
+        console.error(`Error: ${response.status}`);
         if (response.status === 401) {
           alert("로그인이 필요합니다.");
-          navigate("/login"); // 로그인 페이지로 이동
+          navigate("/login");
         } else if (response.status === 400) {
-          alert("잘못된 요청입니다."); // 유효하지 않은 요청 경고
+          alert("잘못된 요청입니다.");
         } else {
           alert("글 작성 실패");
         }
       } else {
         alert("글 작성이 완료되었습니다.");
-        navigate("/"); // 메인 페이지로 이동
+        navigate("/");
       }
     } catch (error) {
-      console.error("글 작성 오류:", error); // 오류 콘솔에 출력
+      console.error("글 작성 오류:", error);
     }
   };
 
   return (
-    <div>
-      <h2>글쓰기</h2>
-      {/* 게시물 작성 폼 */}
-      <form onSubmit={handleSubmit}>
-        <label>제목:</label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)} // 제목 상태 업데이트
-          required
-        />
-        <br />
-        <label>내용:</label>
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)} // 내용 상태 업데이트
-          required
-        />
-        <br />
-        <label>카테고리:</label>
-        <select
-          value={category}
-          onChange={(e) => setCategory(Number(e.target.value))}
-        >
-          {/* 카테고리 선택 옵션 */}
-          <option value={2}>자유게시판</option>
-          <option value={3}>질문게시판</option>
-          <option value={4}>공지게시판</option>
-        </select>
-        <br />
-        <button type="submit">글 작성</button> {/* 제출 버튼 */}
-      </form>
+    <div className="board-page board-write-page">
+      <div className="board-write-card">
+        <div className="board-write-header">
+          <h2 className="board-write-title">글쓰기</h2>
+          <p className="board-write-subtitle">
+            게시판 성격에 맞는 카테고리를 선택하고 내용을 작성해주세요.
+          </p>
+        </div>
+
+        <form className="board-write-form" onSubmit={handleSubmit}>
+          <div className="board-write-field">
+            <label htmlFor="board-title">제목</label>
+            <input
+              id="board-title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="제목을 입력하세요"
+              maxLength={255}
+              required
+            />
+          </div>
+
+          <div className="board-write-field">
+            <label htmlFor="board-content">내용</label>
+            <textarea
+              id="board-content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="내용을 입력하세요"
+              required
+            />
+          </div>
+
+          <div className="board-write-bottom-row">
+            <div className="board-write-category">
+              <label htmlFor="board-category">카테고리</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(Number(e.target.value))}
+              >
+                <option value={2}>자유게시판</option>
+                <option value={3}>질문게시판</option>
+                <option value={4} disabled={!user || user.userLevel < 4}>
+                  공지게시판{" "}
+                  {!user || user.userLevel < 4 ? "(관리자 전용)" : ""}
+                </option>
+              </select>
+            </div>
+
+            <div className="board-write-button-group">
+              <button
+                type="button"
+                className="board-write-cancel-button"
+                onClick={() => navigate(-1)}
+              >
+                취소
+              </button>
+              <button type="submit" className="board-write-submit-button">
+                글 작성
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

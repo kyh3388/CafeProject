@@ -11,7 +11,6 @@ import MyPosts from "./component/board/MyPosts";
 
 import EditProfile from "./component/user/EditProfile";
 import FindId from "./component/user/FindId";
-import FindPassword from "./component/user/FindPassword";
 import Login from "./component/user/Login";
 import Register from "./component/user/Register";
 
@@ -98,7 +97,6 @@ function App() {
         <Route path="register" element={<Register />} />
         <Route path="login" element={<Login setUser={setUser} />} />
         <Route path="find-id" element={<FindId />} />
-        <Route path="find-password" element={<FindPassword />} />
         <Route
           path="boards/detail/:boardNumber"
           element={<BoardDetail user={user} />}
