@@ -1,8 +1,10 @@
 # 카페 시스템
 카페 시스템 구현
+
 # 도구
-이클립스(스프링부트,메이븐), VSCode(리액트-자바스크립트),
-DB(Oracle,업데이트 이후 MySQL)
+Eclipse(SpringBoot, Maven), VSCode(React-js),
+JPA, DB(Oracle, 현재는 MySQL)
+
 # 기능(2024)
 <완료>
 회원가입,
@@ -12,6 +14,7 @@ CRUD,
 게시판 카테고리 분류,
 관리자 권한 분리,
 페이징
+
 # 기능추가(2026)
 <완료>
 1. 비밀번호 암호화
