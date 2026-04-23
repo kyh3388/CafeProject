@@ -2,8 +2,10 @@
 카페 시스템 구현
 
 # 도구
-Eclipse(SpringBoot, Maven), VSCode(React-js),
-JPA, DB(Oracle, 현재는 MySQL)
+Eclipse : SpringBoot(Maven)
+VSCode : React-js
+DB : Oracle, 현재는 MySQL
++ Restfull, JPA
 
 # 기능(2024)
 <완료>
